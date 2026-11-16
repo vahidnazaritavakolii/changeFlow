@@ -514,3 +514,9 @@ implementation, and resolve or accept its findings in writing.
 ## Phase 8: Convergence
 
 - [X] T045 CRITICAL: Turn off FastAPI's default documentation endpoints, which are served without authentication (`GET /docs`, `/redoc`, `/openapi.json` and `/docs/oauth2-redirect` all return 200 with no token), by creating the app with `FastAPI(title="ChangeFlow", docs_url=None, redoc_url=None, openapi_url=None)` in `src/changeflow/api/app.py`; add a test in `tests/api/test_us1_create_view_list.py` asserting that each of those four paths returns 404 or 405 without a token, and with a valid token, per Constitution II and plan: HTTP contract ("Every endpoint requires `Authorization: Bearer <token>`"; "Any other method or path returns the framework's default 404/405") (contradicts)
+
+---
+
+## Phase 9: Convergence
+
+- [X] T046 Return `not_found` instead of a 500 error for a numeric request id outside SQLite's 64-bit INTEGER range (for example 2**63 or a 25-digit id): `GET /change-requests/{id}`, `PUT`, `submit`, `approve` and `request-changes` currently crash because `SqliteChangeRequestRepository.get` passes the value to `sqlite3`, which raises `OverflowError`; make `get` in `src/changeflow/infrastructure/sqlite_repository.py` return `None` for ids outside `-2**63 … 2**63 - 1` (a storage limit, so it stays out of the Application layer), and add tests asserting 404 `not_found` for such an id on view, edit, submit, approve and request-changes in `tests/api/test_us1_create_view_list.py` and a `get` returning `None` in `tests/integration/test_sqlite_repository.py`, per spec Edge Cases ("Request does not exist") and FR-018 (partial)

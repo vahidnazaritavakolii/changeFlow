@@ -10,6 +10,10 @@ _COLUMNS = (
     "id, title, description, reason, requester_id, status, version, changes_requested_reason"
 )
 
+# SQLite INTEGER is a signed 64-bit value; sqlite3 raises OverflowError outside it.
+_SQLITE_INT_MIN = -(2**63)
+_SQLITE_INT_MAX = 2**63 - 1
+
 
 def _to_entity(row: sqlite3.Row) -> ChangeRequest:
     return ChangeRequest(
@@ -29,6 +33,8 @@ class SqliteChangeRequestRepository:
         self._db_path = db_path
 
     def get(self, id: int) -> ChangeRequest | None:
+        if not _SQLITE_INT_MIN <= id <= _SQLITE_INT_MAX:
+            return None  # no stored request can have this id (T046)
         conn = connect(self._db_path)
         try:
             row = conn.execute(

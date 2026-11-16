@@ -134,6 +134,24 @@ def test_unknown_or_non_numeric_id_is_not_found(client, auth, insert_request, ra
     assert_error(response, 404, "not_found")
 
 
+OUT_OF_RANGE_IDS = [str(2**63), "9" * 25]  # beyond SQLite's 64-bit INTEGER range
+
+
+@pytest.mark.parametrize("raw_id", OUT_OF_RANGE_IDS, ids=["2**63", "25-digits"])
+def test_id_beyond_storage_range_is_not_found_for_every_operation(client, auth, raw_id):
+    """T046: spec Edge Cases ("Request does not exist") and FR-018."""
+    base = f"/change-requests/{raw_id}"
+    for response in (
+        client.get(base, headers=auth("alice")),
+        client.put(base, json={**TEXT, "version": 1}, headers=auth("alice")),
+        client.post(f"{base}/submit", json={"version": 1}, headers=auth("alice")),
+        client.post(f"{base}/approve", json={"version": 1}, headers=auth("bob")),
+        client.post(f"{base}/request-changes", json={"version": 1, "reason": "x"},
+                    headers=auth("bob")),
+    ):
+        assert_error(response, 404, "not_found")
+
+
 def test_request_of_another_user_is_hidden(client, auth, insert_request):
     request_id = insert_request("carol")
     response = client.get(f"/change-requests/{request_id}", headers=auth("alice"))

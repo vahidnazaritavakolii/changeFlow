@@ -44,6 +44,17 @@ def test_get_unknown_id_returns_none(repo):
     assert repo.get(999) is None
 
 
+@pytest.mark.parametrize("request_id", [2**63, 10**25, -(2**63) - 1])
+def test_get_id_outside_integer_range_returns_none(repo, request_id):
+    """T046: ids SQLite cannot store are simply unknown, not an error."""
+    assert repo.get(request_id) is None
+
+
+def test_get_at_integer_range_limits_returns_none_when_unknown(repo):
+    assert repo.get(2**63 - 1) is None
+    assert repo.get(-(2**63)) is None
+
+
 def test_get_returns_stored_request(repo, insert_request):
     request_id = insert_request("alice", status="PendingReview", version=4,
                                 changes_requested_reason="why")
