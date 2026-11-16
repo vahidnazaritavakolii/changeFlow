@@ -508,3 +508,9 @@ implementation, and resolve or accept its findings in writing.
   notes).
 - Commit after each task or logical group.
 - Only real, reproducible results are reported (T043, T044).
+
+---
+
+## Phase 8: Convergence
+
+- [X] T045 CRITICAL: Turn off FastAPI's default documentation endpoints, which are served without authentication (`GET /docs`, `/redoc`, `/openapi.json` and `/docs/oauth2-redirect` all return 200 with no token), by creating the app with `FastAPI(title="ChangeFlow", docs_url=None, redoc_url=None, openapi_url=None)` in `src/changeflow/api/app.py`; add a test in `tests/api/test_us1_create_view_list.py` asserting that each of those four paths returns 404 or 405 without a token, and with a valid token, per Constitution II and plan: HTTP contract ("Every endpoint requires `Authorization: Bearer <token>`"; "Any other method or path returns the framework's default 404/405") (contradicts)

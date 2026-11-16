@@ -15,7 +15,8 @@ from changeflow.infrastructure.sqlite_users import SqliteUserDirectory
 def create_app(db_path: str | None = None) -> FastAPI:
     path = db_path or os.environ.get("CHANGEFLOW_DB", "changeflow.db")
     init_schema(path)
-    app = FastAPI(title="ChangeFlow")
+    # No unauthenticated documentation endpoints (Constitution II, HTTP contract; T045).
+    app = FastAPI(title="ChangeFlow", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.use_cases = UseCases(
         SqliteChangeRequestRepository(path), SqliteUserDirectory(path)
     )

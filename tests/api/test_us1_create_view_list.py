@@ -167,6 +167,17 @@ def test_owner_without_any_role_lists_own_requests(client, auth, insert_request)
 # --- Operations that do not exist (FR-019, FR-021) ----------------------------------------
 
 
+DOC_PATHS = ["/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"]
+
+
+@pytest.mark.parametrize("path", DOC_PATHS)
+@pytest.mark.parametrize("user", [None, "bob"], ids=["no-token", "valid-token"])
+def test_framework_documentation_endpoints_are_not_served(client, auth, path, user):
+    """T045: Constitution II (deny by default) and the HTTP contract (any other path → 404/405)."""
+    response = client.get(path, headers=auth(user) if user else {})
+    assert response.status_code in (404, 405)
+
+
 def test_delete_and_unlisted_routes_are_rejected(client, auth, insert_request, read_row):
     request_id = insert_request("alice")
     before = read_row(request_id)
