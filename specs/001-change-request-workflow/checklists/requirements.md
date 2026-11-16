@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -33,8 +33,8 @@
 
 - Iteration 1 fixes: SC-005 reworded (operation count was inconsistent); SC-003 "byte-for-byte"
   replaced with technology-neutral wording.
-- Open: three [NEEDS CLARIFICATION] markers (FR-015 visibility, FR-016 self-RequestChanges,
-  FR-017 terminal rejection/cancellation), deliberately left for the product owner per the
-  feature description. The other five undecided behaviours are recorded as reviewable
+- Resolved: all three [NEEDS CLARIFICATION] markers (FR-015 visibility, FR-016
+  self-RequestChanges, FR-017 terminal rejection/cancellation) were resolved in the
+  Clarifications section of [spec.md](../spec.md) (Session 2026-11-17). The other five undecided behaviours are recorded as reviewable
   assumptions A1–A5.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
