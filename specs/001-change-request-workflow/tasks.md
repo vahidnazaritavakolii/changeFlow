@@ -70,14 +70,14 @@ reads or writes data.
 
 ### Tests first (Domain foundation)
 
-- [ ] T004 [P] Write `tests/unit/domain/test_model.py` (no HTTP, no DB): `Status` has exactly the
+- [X] T004 [P] Write `tests/unit/domain/test_model.py` (no HTTP, no DB): `Status` has exactly the
   values `Draft`, `PendingReview`, `ChangesRequested`, `Approved`; `Role` has exactly
   `requester`, `reviewer`; the transition table contains exactly these (from-status, operation)
   → to-status entries: (Draft, edit) → Draft, (ChangesRequested, edit) → ChangesRequested,
   (Draft, submit) → PendingReview, (ChangesRequested, submit) → PendingReview,
   (PendingReview, approve) → Approved, (PendingReview, request_changes) → ChangesRequested; no
   entry starts from Approved; there is no delete operation (FR-002, FR-017, FR-021)
-- [ ] T005 [P] Write `tests/unit/domain/test_rules_common.py` (no HTTP, no DB) for the shared
+- [X] T005 [P] Write `tests/unit/domain/test_rules_common.py` (no HTTP, no DB) for the shared
   rules: visibility (FR-015) — the owner sees their own request with any roles or none
   (including an owner with no roles), a reviewer sees any request, a requester-only non-owner
   and a no-role non-owner see nothing; text validation (FR-004, A6,
@@ -90,12 +90,12 @@ reads or writes data.
 
 ### Domain and Application foundation
 
-- [ ] T006 [P] Create `src/changeflow/domain/errors.py`: base `DomainError(Exception)` with a
+- [X] T006 [P] Create `src/changeflow/domain/errors.py`: base `DomainError(Exception)` with a
   `message` attribute, and subclasses `NotFound`, `Forbidden`, `InvalidInput`, `Conflict`,
   `InvalidStatus`
-- [ ] T007 [P] Create `src/changeflow/application/errors.py`: `Unauthenticated(Exception)` with a
+- [X] T007 [P] Create `src/changeflow/application/errors.py`: `Unauthenticated(Exception)` with a
   `message` attribute
-- [ ] T008 Create `src/changeflow/domain/model.py` (stdlib only): `Role` enum (`requester`,
+- [X] T008 Create `src/changeflow/domain/model.py` (stdlib only): `Role` enum (`requester`,
   `reviewer`); `Status` enum (`Draft`, `PendingReview`, `ChangesRequested`, `Approved`); frozen
   dataclass `Actor(user_id: str, roles: frozenset[Role])`; frozen dataclass `ChangeRequest` with
   fields `id: int | None`, `title`, `description`, `reason`, `requester_id: str`,
@@ -103,7 +103,7 @@ reads or writes data.
   modification"), `changes_requested_reason: str | None` ("holds only the most recent reason";
   null until the first RequestChanges); module constant `TRANSITIONS` mapping
   (Status, operation name) → Status exactly as listed in T004. Make T004 pass
-- [ ] T009 Create `src/changeflow/domain/rules.py` with the shared rules only: `is_visible(actor,
+- [X] T009 Create `src/changeflow/domain/rules.py` with the shared rules only: `is_visible(actor,
   request) -> bool` (FR-015 table in data-model.md); `validate_body(body) -> dict` (raises
   `InvalidInput` if `body` is not a `dict`); `validate_text(body, *field_names)` using limits
   defined once as module-level constants in `rules.py` (A6: `title` ≤ 200, `description` ≤
@@ -112,7 +112,7 @@ reads or writes data.
   `check_version(request, version)` raising `Conflict` when they differ;
   `next_status(request, operation)` raising `InvalidStatus` when (status, operation) is not in
   `TRANSITIONS`. Make T005 pass
-- [ ] T010 Create `src/changeflow/application/ports.py` with `typing.Protocol` classes:
+- [X] T010 Create `src/changeflow/application/ports.py` with `typing.Protocol` classes:
   `ChangeRequestRepository` (`get(id: int) -> ChangeRequest | None`;
   `add(request: ChangeRequest) -> ChangeRequest` returning it with assigned `id` and
   `version = 1`; `update_if_version(request: ChangeRequest, expected_version: int) -> bool`;
@@ -121,7 +121,7 @@ reads or writes data.
 
 ### Schema, provisioning and shared fixtures
 
-- [ ] T011 Create `src/changeflow/infrastructure/sqlite_db.py`: `connect(db_path) ->
+- [X] T011 Create `src/changeflow/infrastructure/sqlite_db.py`: `connect(db_path) ->
   sqlite3.Connection` (sets `PRAGMA foreign_keys = ON`, `timeout=5.0`/busy timeout 5 s,
   `row_factory = sqlite3.Row`); `init_schema(db_path)` running idempotent
   `CREATE TABLE IF NOT EXISTS` for `users(id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE)`,
@@ -132,12 +132,12 @@ reads or writes data.
   ('Draft', 'PendingReview', 'ChangesRequested', 'Approved')), version INTEGER NOT NULL CHECK
   (version >= 1), changes_requested_reason TEXT NULL)`; `hash_token(token) -> str` (SHA-256 hex)
   (data-model.md storage schema, research R1/R3)
-- [ ] T012 Create `src/changeflow/infrastructure/seed.py` (development only): function
+- [X] T012 Create `src/changeflow/infrastructure/seed.py` (development only): function
   `create_user(db_path, user_id, roles) -> str` that calls `init_schema`, generates a token with
   `secrets.token_urlsafe(32)`, stores only `hash_token(token)` and the roles, and returns the
   token; `main()` CLI run as `python -m changeflow.infrastructure.seed --db PATH user=role[,role]
   …` printing one line per user: `export <USER_ID_UPPERCASE>_TOKEN=<token>` (quickstart.md)
-- [ ] T013 Create `tests/conftest.py` shared fixtures: `db_path` (fresh SQLite file under
+- [X] T013 Create `tests/conftest.py` shared fixtures: `db_path` (fresh SQLite file under
   `tmp_path`, schema initialised); `tokens` (dict user → token created with `create_user` for
   alice/bob/erin/carol/dave as in Shared conventions); `auth(user)` → `{"Authorization":
   "Bearer <token>"}`; `client` (FastAPI `TestClient(create_app(db_path))`, importing `create_app`
@@ -149,29 +149,29 @@ reads or writes data.
 
 ### Infrastructure (tests first)
 
-- [ ] T014 [P] Write `tests/integration/test_sqlite_repository.py` against a real temp SQLite file
+- [X] T014 [P] Write `tests/integration/test_sqlite_repository.py` against a real temp SQLite file
   (uses `db_path`, `insert_request`, `read_row`): `add` assigns increasing ids and `version` 1;
   `get` returns `None` for an unknown id; `list_all` and `list_by_requester` return requests
   ordered by `id` (PA-2); `update_if_version` with the current version writes all fields,
   increments `version` by exactly 1 and returns `True`; with any other version returns `False`
   and the row is unchanged; inserting or updating to status `'Rejected'` raises
   `sqlite3.IntegrityError` (CHECK constraint, SC-006)
-- [ ] T015 [P] Write `tests/integration/test_sqlite_users.py`: a valid token returns
+- [X] T015 [P] Write `tests/integration/test_sqlite_users.py`: a valid token returns
   `Actor(user_id, roles)` with the user's current roles; an unknown token returns `None`; only the
   hash is stored (the raw token does not appear in `users`); after `remove_role` the next lookup
   no longer contains that role (FR-023)
-- [ ] T016 [P] Create `src/changeflow/infrastructure/sqlite_repository.py`:
+- [X] T016 [P] Create `src/changeflow/infrastructure/sqlite_repository.py`:
   `SqliteChangeRequestRepository(db_path)` implementing `ChangeRequestRepository`; one connection
   per call; `update_if_version` is the single statement `UPDATE change_requests SET title = ?,
   description = ?, reason = ?, status = ?, changes_requested_reason = ?, version = version + 1
   WHERE id = ? AND version = ?` returning `cursor.rowcount == 1` (research R2). Make T014 pass
-- [ ] T017 [P] Create `src/changeflow/infrastructure/sqlite_users.py`:
+- [X] T017 [P] Create `src/changeflow/infrastructure/sqlite_users.py`:
   `SqliteUserDirectory(db_path)` implementing `UserDirectory`; looks up `hash_token(token)` and
   reads roles from `user_roles` on every call (no caching). Make T015 pass
 
 ### Application and HTTP skeleton
 
-- [ ] T018 Create `src/changeflow/application/use_cases.py` with class `UseCases(repository,
+- [X] T018 Create `src/changeflow/application/use_cases.py` with class `UseCases(repository,
   users)` and private helpers only: `_authenticate(token: str | None) -> Actor` (raises
   `Unauthenticated` for `None`, empty or unknown token — FR-020 step 1);
   `_load_visible(actor, raw_id: str) -> ChangeRequest` (non-numeric id, unknown id or
@@ -179,28 +179,28 @@ reads or writes data.
   ChangeRequest` (calls `update_if_version`; `False` → `Conflict`; returns the updated request
   with `version = loaded_version + 1` — step 7). Imports only `changeflow.domain` and
   `changeflow.application`
-- [ ] T019 [P] Create `src/changeflow/api/http_io.py` (parsing only, no business rules):
+- [X] T019 [P] Create `src/changeflow/api/http_io.py` (parsing only, no business rules):
   `bearer_token(request) -> str | None` (value after `Bearer ` in `Authorization`, else `None`);
   `async json_body(request) -> object` (parsed JSON, or the sentinel `INVALID_BODY` when the body
   is empty or not valid JSON) (research R5)
-- [ ] T020 [P] Create `src/changeflow/api/errors.py`: dict `ERROR_MAP` from exception class to
+- [X] T020 [P] Create `src/changeflow/api/errors.py`: dict `ERROR_MAP` from exception class to
   `(status, code)`: `Unauthenticated` → (401, `unauthenticated`), `NotFound` → (404,
   `not_found`), `Forbidden` → (403, `forbidden`), `InvalidInput` → (400, `invalid_input`),
   `Conflict` → (409, `conflict`), `InvalidStatus` → (422, `invalid_status`); exception handler
   returning `{"error": {"code": ..., "message": ...}}` and, for 401, header
   `WWW-Authenticate: Bearer` (contracts/http-api.md, research R6)
-- [ ] T021 [P] Create `src/changeflow/api/schemas.py` (output only): Pydantic models
+- [X] T021 [P] Create `src/changeflow/api/schemas.py` (output only): Pydantic models
   `ChangeRequestOut` (`id`, `title`, `description`, `reason`, `requester_id`, `status`,
   `version`, `changes_requested_reason`), `ChangeRequestList(items: list[ChangeRequestOut])`,
   and a `to_out(request)` converter
-- [ ] T022 Create `src/changeflow/api/routes.py` with an empty `APIRouter` named `router` and a
+- [X] T022 Create `src/changeflow/api/routes.py` with an empty `APIRouter` named `router` and a
   dependency `get_use_cases(request)` returning `request.app.state.use_cases`
-- [ ] T023 Create `src/changeflow/api/app.py`: `create_app(db_path: str | None = None)` (default
+- [X] T023 Create `src/changeflow/api/app.py`: `create_app(db_path: str | None = None)` (default
   from env `CHANGEFLOW_DB`, else `changeflow.db`) that calls `init_schema`, builds
   `UseCases(SqliteChangeRequestRepository(db_path), SqliteUserDirectory(db_path))`, stores it on
   `app.state.use_cases`, includes `router`, and registers the `api/errors.py` handler for every
   class in `ERROR_MAP` (composition root, plan.md)
-- [ ] T024 Write `tests/architecture/test_architecture.py` using stdlib `ast` (research R7):
+- [X] T024 Write `tests/architecture/test_architecture.py` using stdlib `ast` (research R7):
   (a) no module under `src/changeflow/domain/` imports `fastapi`, `starlette`, `pydantic`,
   `sqlite3`, `sqlalchemy`, `httpx`, `uvicorn`, `changeflow.application`,
   `changeflow.infrastructure` or `changeflow.api`; (b) no module under
