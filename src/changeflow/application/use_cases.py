@@ -67,3 +67,15 @@ class UseCases:
         actor = self._authenticate(token)
         loaded = self._load_visible(actor, raw_id)
         return self._save(rules.submit(actor, loaded, body), loaded.version)
+
+    # --- User Story 2 ----------------------------------------------------------
+
+    def approve(self, token: str | None, raw_id: str, body: object) -> ChangeRequest:
+        actor = self._authenticate(token)
+        loaded = self._load_visible(actor, raw_id)
+        return self._save(rules.approve(actor, loaded, body), loaded.version)
+
+    def request_changes(self, token: str | None, raw_id: str, body: object) -> ChangeRequest:
+        actor = self._authenticate(token)
+        loaded = self._load_visible(actor, raw_id)
+        return self._save(rules.request_changes(actor, loaded, body), loaded.version)

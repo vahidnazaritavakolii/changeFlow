@@ -49,3 +49,19 @@ async def submit_change_request(
     id: str, request: Request, use_cases: UseCases = Depends(get_use_cases)
 ) -> ChangeRequestOut:
     return to_out(use_cases.submit(bearer_token(request), id, await json_body(request)))
+
+
+@router.post("/change-requests/{id}/approve", response_model=ChangeRequestOut)
+async def approve_change_request(
+    id: str, request: Request, use_cases: UseCases = Depends(get_use_cases)
+) -> ChangeRequestOut:
+    return to_out(use_cases.approve(bearer_token(request), id, await json_body(request)))
+
+
+@router.post("/change-requests/{id}/request-changes", response_model=ChangeRequestOut)
+async def request_changes_on_change_request(
+    id: str, request: Request, use_cases: UseCases = Depends(get_use_cases)
+) -> ChangeRequestOut:
+    return to_out(
+        use_cases.request_changes(bearer_token(request), id, await json_body(request))
+    )

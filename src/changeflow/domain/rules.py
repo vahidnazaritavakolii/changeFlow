@@ -7,7 +7,9 @@ from dataclasses import replace
 
 from changeflow.domain.errors import Conflict, Forbidden, InvalidInput, InvalidStatus
 from changeflow.domain.model import (
+    APPROVE,
     EDIT,
+    REQUEST_CHANGES,
     SUBMIT,
     TRANSITIONS,
     Actor,
@@ -125,3 +127,33 @@ def submit(actor: Actor, request: ChangeRequest, body: object) -> ChangeRequest:
     version = validate_version(validate_body(body))  # step 4
     check_version(request, version)  # step 5
     return replace(request, status=next_status(request, SUBMIT))  # step 6
+
+
+# --- Reviewer operations (FR-010..FR-012, FR-016). FR-020 steps 3 -> 6. ---
+
+
+def _require_independent_reviewer(actor: Actor, request: ChangeRequest) -> None:
+    """Reviewer role required, and nobody reviews their own request (FR-012, FR-016),
+    whatever roles they hold."""
+    if Role.REVIEWER not in actor.roles:
+        raise Forbidden("The Reviewer role is required.")
+    if request.requester_id == actor.user_id:
+        raise Forbidden("You cannot review your own change request.")
+
+
+def approve(actor: Actor, request: ChangeRequest, body: object) -> ChangeRequest:
+    _require_independent_reviewer(actor, request)  # step 3
+    version = validate_version(validate_body(body))  # step 4
+    check_version(request, version)  # step 5
+    return replace(request, status=next_status(request, APPROVE))  # step 6
+
+
+def request_changes(actor: Actor, request: ChangeRequest, body: object) -> ChangeRequest:
+    """Stores only the most recent reason (FR-011)."""
+    _require_independent_reviewer(actor, request)  # step 3
+    data = validate_body(body)  # step 4
+    reason = validate_text(data, "reason")["reason"]
+    version = validate_version(data)
+    check_version(request, version)  # step 5
+    status = next_status(request, REQUEST_CHANGES)  # step 6
+    return replace(request, status=status, changes_requested_reason=reason)

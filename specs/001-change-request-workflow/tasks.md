@@ -290,33 +290,35 @@ self-RequestChanges are forbidden even for dual-role users.
 
 ### Tests for User Story 2 (write first, confirm they fail) ⚠️
 
-- [ ] T031 [P] [US2] Write `tests/unit/domain/test_us2_review_rules.py` (no HTTP, no DB):
+- [X] T031 [P] [US2] Write `tests/unit/domain/test_us2_review_rules.py` (no HTTP, no DB):
   `approve` by a reviewer non-owner → Approved; `request_changes` with non-blank reason →
   ChangesRequested and `changes_requested_reason` set (replacing any earlier reason, FR-011);
   requester-only or no-role caller → `Forbidden`; dual-role owner approving or requesting changes
   on own request → `Forbidden` (FR-012, FR-016); reason missing, blank or > 10,000 characters →
   `InvalidInput`; Draft/ChangesRequested/Approved → `InvalidStatus`; stale version →
   `Conflict`; self-approval with stale version → `Forbidden` (FR-020)
-- [ ] T032 [P] [US2] Write `tests/api/test_us2_review.py` (HTTP + SQLite, requests created with
+- [X] T032 [P] [US2] Write `tests/api/test_us2_review.py` (HTTP + SQLite, requests created with
   `insert_request`): US2 scenarios 1–7 (200/200/403/403/422/400/403) with the stored row checked
   after each — for scenario 4 use alice approving her own PendingReview request (visible, not a
   reviewer → 403), and also check dave (cannot see it) → 404 per FR-020; reviewer views and lists all requests; role removed mid-flow — `remove_role("bob",
   "reviewer")` then bob approves → 403 and the row is unchanged, while erin can still approve
   (FR-023); dual-role carol self-approves with an outdated version → 403 (contract worked
   example); SC-001: every self-approval and self-RequestChanges attempt in this file leaves the
-  stored status PendingReview
+  stored status PendingReview. *Implementation note: after `remove_role("bob", "reviewer")`,
+  bob can no longer see alice's request (FR-015), so the FR-020 order reports 404
+  `not_found`, not 403; the test asserts 404 and the unchanged row.*
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] Add `approve(actor, request, body)` and `request_changes(actor, request, body)`
+- [X] T033 [US2] Add `approve(actor, request, body)` and `request_changes(actor, request, body)`
   to `src/changeflow/domain/rules.py`: permission = holds Reviewer **and** `actor.user_id !=
   request.requester_id` (else `Forbidden`) → `validate_version` (+ `validate_text("reason")`
   for request_changes, stored into `changes_requested_reason`) → `check_version` →
   `next_status`. Make T031 pass
-- [ ] T034 [US2] Add `UseCases.approve(token, raw_id, body)` and `UseCases.request_changes(token,
+- [X] T034 [US2] Add `UseCases.approve(token, raw_id, body)` and `UseCases.request_changes(token,
   raw_id, body)` to `src/changeflow/application/use_cases.py` (authenticate → load visible →
   Domain → `_save`)
-- [ ] T035 [US2] Add handlers `POST /change-requests/{id}/approve` and
+- [X] T035 [US2] Add handlers `POST /change-requests/{id}/approve` and
   `POST /change-requests/{id}/request-changes` to `src/changeflow/api/routes.py` (same shape as
   T030, one `UseCases` call each). Make T032 and T024 pass
 
