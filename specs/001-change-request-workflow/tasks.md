@@ -47,15 +47,15 @@ US3 (P2), US4 (P3).
 
 **Purpose**: Project initialization
 
-- [ ] T001 Create `pyproject.toml`: project name `changeflow`, `requires-python = ">=3.12"`,
+- [X] T001 Create `pyproject.toml`: project name `changeflow`, `requires-python = ">=3.12"`,
   `src/` layout (setuptools, package dir `src`), runtime dependencies `fastapi>=0.115` and
   `uvicorn>=0.30`, optional `dev` extra with `pytest>=8` and `httpx>=0.27`, and
   `[tool.pytest.ini_options]` with `testpaths = ["tests"]` and
   `addopts = "--import-mode=importlib"` (research R9)
-- [ ] T002 [P] Create empty package markers `src/changeflow/__init__.py`,
+- [X] T002 [P] Create empty package markers `src/changeflow/__init__.py`,
   `src/changeflow/domain/__init__.py`, `src/changeflow/application/__init__.py`,
   `src/changeflow/infrastructure/__init__.py`, `src/changeflow/api/__init__.py`
-- [ ] T003 [P] Create `.gitignore` ignoring `.venv/`, `__pycache__/`, `*.pyc`, `.pytest_cache/`,
+- [X] T003 [P] Create `.gitignore` ignoring `.venv/`, `__pycache__/`, `*.pyc`, `.pytest_cache/`,
   `*.egg-info/`, `changeflow.db`
 
 ---
