@@ -4,6 +4,10 @@
 
 ## Domain concepts
 
+Naming: the spec's Requester/Reviewer and RequestChanges appear in storage and code as
+`requester`/`reviewer` and `request_changes`, and in the HTTP path as `request-changes`; status
+values are spelled identically everywhere.
+
 ### Role
 
 `Requester` | `Reviewer`. A user holds zero, one or both.
@@ -54,10 +58,11 @@ delete operation (FR-021). Edit replaces all three text fields (plan assumption 
 | Caller | Can see |
 |--------|---------|
 | Holds Reviewer | All requests |
-| Holds Requester only | Requests where `requester_id` = caller |
-| Holds no role | Nothing (list is empty; single request is `not_found`) |
+| Requester of the request, with any roles or none | That request (`requester_id` = caller) |
+| Anyone else | Nothing (single request is `not_found`) |
 
-A request the caller cannot see is reported as `not_found` for every operation.
+A request the caller cannot see is reported as `not_found` for every operation. An owner without
+the Requester role can still view their request but gets `forbidden` on edit and submit.
 
 ## Order of checks for state-changing operations (FR-020)
 

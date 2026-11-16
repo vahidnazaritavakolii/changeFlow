@@ -35,6 +35,7 @@
   replaced with technology-neutral wording.
 - Resolved: all three [NEEDS CLARIFICATION] markers (FR-015 visibility, FR-016
   self-RequestChanges, FR-017 terminal rejection/cancellation) were resolved in the
-  Clarifications section of [spec.md](../spec.md) (Session 2026-11-17). The other five undecided behaviours are recorded as reviewable
-  assumptions A1–A5.
+  Clarifications section of [spec.md](../spec.md) (Session 2026-11-17). The other five
+  undecided behaviours (A1–A5) were confirmed in that session and are now requirements (FR-006,
+  FR-011, FR-021–FR-023); A6 and A7 remain open reviewable assumptions.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`

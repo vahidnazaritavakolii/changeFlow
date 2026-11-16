@@ -29,6 +29,10 @@ unchanged.
 
 `code` is one of the six values above; `message` is informational and may change.
 
+### Request bodies
+
+Unknown extra fields in a request body are ignored (plan assumption PA-7).
+
 ## Resource representation
 
 ```json

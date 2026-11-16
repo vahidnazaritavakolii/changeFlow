@@ -108,9 +108,11 @@ tries to approve their own request and the stored status remains PendingReview.
 3. **Given** a request in PendingReview created by user A, who also holds the Reviewer role,
    **When** user A tries to approve it, **Then** the operation is rejected as forbidden
    (self-approval) and the stored status remains PendingReview.
-4. **Given** a request in PendingReview, **When** a user without the Reviewer role tries to
-   approve it or request changes, **Then** the operation is rejected as forbidden and the stored
-   request is unchanged.
+4. **Given** a request in PendingReview, **When** its requester, who does not hold the Reviewer
+   role, tries to approve it or request changes, **Then** the operation is rejected as forbidden
+   and the stored request is unchanged; **When** a user who holds no Reviewer role and is not its
+   requester (and so cannot see it, FR-015) tries the same, **Then** the operation is rejected
+   as not found and the stored request is unchanged.
 5. **Given** a request in Draft, ChangesRequested or Approved, **When** a Reviewer tries to
    approve it or request changes, **Then** the operation is rejected as not allowed in the current
    status and the stored request is unchanged.
@@ -188,8 +190,9 @@ approve it.
   FR-022).
 - **Several failures at once**: e.g. a Reviewer approves their own request using an outdated
   version → reported as forbidden, because permission is checked before version (FR-020).
-- **Role removed mid-flow**: a user loses the Requester role while owning a Draft, or loses the
-  Reviewer role between reading and approving a request → the operation is rejected as forbidden
+- **Role removed mid-flow**: a user loses the Requester role while owning a Draft (they can still
+  view it, FR-015), or loses the Reviewer role between reading and approving a request (while
+  still able to see it) → the operation is rejected as forbidden
   at the time it is attempted, because current permission is checked on every operation
   (FR-013, FR-023).
 - **Request does not exist**: any operation on an unknown request is rejected as not found and
@@ -215,8 +218,8 @@ approve it.
   Approved, and the only valid status transitions MUST be:
   Draft → PendingReview (Submit), PendingReview → Approved (Approve), PendingReview →
   ChangesRequested (RequestChanges), ChangesRequested → PendingReview (Submit).
-- **FR-003**: Any operation that would cause a transition not listed in FR-002 MUST be rejected
-  with an "invalid status" outcome, and the stored request MUST be unchanged.
+- **FR-003**: Any operation that would cause a transition not listed in FR-002 MUST be rejected,
+  subject to the check order in FR-020, with an "invalid status" outcome, and the stored request MUST be unchanged.
 - **FR-004**: Title, description and reason MUST be non-blank on create and on every edit, and
   within the length limits in assumption A6; otherwise the operation MUST be rejected as
   invalid input.
@@ -230,8 +233,9 @@ approve it.
   rejected as invalid status.
 - **FR-007**: The requester of a request MUST be able to submit it when it is in Draft or
   ChangesRequested, moving it to PendingReview.
-- **FR-008**: Edit and submit MUST be rejected as forbidden when the caller is not the request's
-  requester or does not currently hold the Requester role.
+- **FR-008**: Edit and submit MUST be rejected as forbidden when the caller can see the request
+  (FR-015) but is not its requester or does not currently hold the Requester role. A caller who
+  cannot see the request MUST get "not found" under FR-015.
 - **FR-009**: An Approved request MUST NOT be editable by anyone.
 
 **Reviewer operations**
@@ -255,8 +259,9 @@ approve it.
   based on. If that version is not the current version, the operation MUST be rejected with a
   "conflict" outcome and the stored request MUST remain unchanged. Of several concurrent
   operations based on the same version, at most one MUST succeed.
-- **FR-015**: Visibility MUST be: (a) the requester of a request can view it, including its
-  status and the most recent change-request reason, and can list all requests they own; (b) a
+- **FR-015**: Visibility MUST be: (a) the requester of a request can always view it, including
+  its status and the most recent change-request reason, with or without any role, and can list
+  all requests they own; (b) a
   user currently holding the Reviewer role can view and list all requests; (c) no other user can
   view or list a request. A request the caller may not see MUST be reported as "not found", for
   viewing and for every other operation on it, so its existence is not revealed.

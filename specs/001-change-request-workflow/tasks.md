@@ -78,8 +78,9 @@ reads or writes data.
   (PendingReview, approve) → Approved, (PendingReview, request_changes) → ChangesRequested; no
   entry starts from Approved; there is no delete operation (FR-002, FR-017, FR-021)
 - [ ] T005 [P] Write `tests/unit/domain/test_rules_common.py` (no HTTP, no DB) for the shared
-  rules: visibility (FR-015) — owner sees own request, a reviewer sees any request, a
-  requester-only non-owner and a user with no roles see nothing; text validation (FR-004, A6,
+  rules: visibility (FR-015) — the owner sees their own request with any roles or none
+  (including an owner with no roles), a reviewer sees any request, a requester-only non-owner
+  and a no-role non-owner see nothing; text validation (FR-004, A6,
   PA-5) — title "Non-blank (not empty after trimming whitespace); ≤ 200 characters", description
   and reason "Non-blank; ≤ 10,000 characters", 200/10,000 accepted and 201/10,001 rejected,
   whitespace-only rejected, missing key rejected, non-string rejected, values returned unchanged
@@ -105,7 +106,8 @@ reads or writes data.
 - [ ] T009 Create `src/changeflow/domain/rules.py` with the shared rules only: `is_visible(actor,
   request) -> bool` (FR-015 table in data-model.md); `validate_body(body) -> dict` (raises
   `InvalidInput` if `body` is not a `dict`); `validate_text(body, *field_names)` using limits
-  `title` ≤ 200, `description` ≤ 10,000, `reason` ≤ 10,000, non-blank after `strip()`, values
+  defined once as module-level constants in `rules.py` (A6: `title` ≤ 200, `description` ≤
+  10,000, `reason` ≤ 10,000), non-blank after `strip()`, values
   returned as given; `validate_version(body) -> int` (JSON integer ≥ 1, reject `bool`);
   `check_version(request, version)` raising `Conflict` when they differ;
   `next_status(request, operation)` raising `InvalidStatus` when (status, operation) is not in
@@ -228,8 +230,8 @@ the last edit and status PendingReview (spec US1).
   `create` — Requester gets a Draft with `requester_id` = caller and `version` 1; no Requester
   role (reviewer-only, no roles) → `Forbidden` (also when the body is invalid: forbidden before
   invalid input); `edit` and `submit` on own Draft succeed (edit keeps status Draft, submit →
-  PendingReview); non-owner with Requester role, owner who lost the Requester role, and
-  reviewer-only caller → `Forbidden`; edit on PendingReview or Approved → `InvalidStatus`;
+  PendingReview); non-owner with Requester role, owner who lost the Requester role (still able
+  to view it, FR-015), and reviewer-only caller → `Forbidden`; edit on PendingReview or Approved → `InvalidStatus`;
   submit on PendingReview or Approved → `InvalidStatus`; stale `version` → `Conflict`; order
   checks: forbidden beats invalid input, invalid input beats conflict, conflict beats invalid
   status (FR-005–FR-009, FR-019, FR-020)
@@ -239,13 +241,17 @@ the last edit and status PendingReview (spec US1).
   (no token, malformed header, unknown token → 401 with `WWW-Authenticate: Bearer` on create,
   list and view); view own request → 200; scenario 9 (alice lists only hers; bob and carol list
   all; dave gets `{"items": []}`, PA-3); unknown id and non-numeric id → 404; alice viewing a
-  request owned by carol → 404 (hiding existence, FR-015)
+  request owned by carol → 404 (hiding existence, FR-015); `DELETE /change-requests/{id}` and an
+  unlisted route (e.g. `POST /change-requests/{id}/reject`) → 404 or 405, with the stored row
+  unchanged (FR-019, FR-021)
 - [ ] T027 [P] [US1] Write `tests/api/test_us1_edit_submit.py` (HTTP + SQLite): scenario 2 (PUT
   with current version → 200, row has new text, version +1); scenario 3 (submit → 200,
   PendingReview); scenario 6 (alice edits/submits carol's Draft → 404; bob (reviewer) edits or
   submits alice's Draft → 403); scenario 8 (edit when PendingReview or Approved → 422); missing
   `version` → 400; non-JSON body → 400; repeated submit with old version → 409 and with current
-  version → 422 (FR-022); after every rejection the row is unchanged (SC-003)
+  version → 422 (FR-022); an edit with values identical to the stored ones → 200 and version
+  +1 (edge case); an edit body with an unknown extra field → 200, the field ignored and not
+  stored (PA-7); after every rejection the row is unchanged (SC-003)
 
 ### Implementation for User Story 1
 
@@ -260,7 +266,8 @@ the last edit and status PendingReview (spec US1).
   `edit(token, raw_id, body)` and `submit(token, raw_id, body)` to
   `src/changeflow/application/use_cases.py`: authenticate → (load visible) → Domain function →
   `repository.add` / `_save`; `list_requests` returns `list_all()` for reviewers, else
-  `list_by_requester(actor.user_id)` for requesters, else `[]` (FR-015, PA-2, PA-3)
+  `list_by_requester(actor.user_id)` for every other caller, whatever roles they hold (empty if
+  they own none) (FR-015, PA-2, PA-3)
 - [ ] T030 [US1] Add handlers to `src/changeflow/api/routes.py`: `POST /change-requests` (201),
   `GET /change-requests`, `GET /change-requests/{id}`, `PUT /change-requests/{id}`,
   `POST /change-requests/{id}/submit`; each handler reads `bearer_token`, the path id as `str`,

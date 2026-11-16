@@ -33,7 +33,8 @@ tests for the conditional update; an AST-based architecture test (research R7)
 
 **Project Type**: web service (HTTP API only, no UI)
 
-**Performance Goals**: none for this version (SC-006/A8 removed in clarification; performance
+**Performance Goals**: none for this version (the former performance criterion and assumption A8
+were removed in clarification; performance
 targets are out of scope)
 
 **Constraints**: FR-020 check order; stale writes rejected atomically (FR-014); no status outside
@@ -55,7 +56,7 @@ mechanism) remain open reviewable assumptions; A7 is covered for this version by
 | III. Integrity under concurrency | Stale writes rejected with explicit conflict; never outside workflow | PASS (planned): R2 decides the mechanism |
 | IV. Evidence-based quality | Domain unit tests without HTTP/DB; every transition and authorization rule tested; sensitive tests verify persisted state; only real results reported | PASS (planned): test layout below; quickstart marked "planned" |
 | V. Simplicity | No layer, abstraction or dependency without a present, documented need; nothing beyond scope | PASS (planned): R8 justifies each layer; no ORM, DI container or fakes |
-| VI. Traceable decisions | Unstated product behaviour clarified or recorded as an assumption; technology justified in research | PASS (planned): R1–R9; planning assumptions PA-1…PA-6 below |
+| VI. Traceable decisions | Unstated product behaviour clarified or recorded as an assumption; technology justified in research | PASS (planned): R1–R9; planning assumptions PA-1…PA-7 below |
 
 No violations, so Complexity Tracking stays empty.
 
@@ -119,8 +120,7 @@ tests/
 ```
 
 **Structure Decision**: a single Python project with a `src/` layout and four packages,
-matching the four responsibilities required by Principle I. Each package is justified in
-research R8; there are no further sub-layers. Dependencies point inward: `api` →
+each justified in research R8; there are no further sub-layers. Dependencies point inward: `api` →
 `application` → `domain`; `infrastructure` → `application` (implements its ports) and `domain`.
 Only `api/app.py` imports `infrastructure`, to wire the adapters.
 
@@ -159,10 +159,13 @@ Product behaviour the spec does not state, needed to build the API. Each item is
   "the most recent reason") until a new RequestChanges replaces it.
 - **PA-2**: The list returns all visible requests ordered by `id`, with no pagination or
   filtering (no requirement asks for them).
-- **PA-3**: An authenticated user with no role gets an empty list (consistent with FR-015(c)).
+- **PA-3**: An authenticated user without the Reviewer role, including one with no role at all,
+  gets only the requests they own (an empty list if they own none), consistent with FR-015(a)
+  and (c).
 - **PA-4**: Edit replaces title, description and reason together; all three are required.
 - **PA-5**: "Non-blank" means not empty after trimming whitespace; values are stored as given.
 - **PA-6**: A non-numeric request id is reported as `not_found` (after authentication).
+- **PA-7**: Unknown extra fields in a request body are ignored.
 
 ## Constitution Check (post-design re-evaluation)
 
@@ -173,7 +176,7 @@ Product behaviour the spec does not state, needed to build the API. Each item is
 | III | Version compared in Domain plus atomic `UPDATE … WHERE version = ?` (R2); `CHECK` constraint on status; no partial writes (single statement) | PASS |
 | IV | Unit tests without HTTP/DB; per-transition and per-rule tests; API tests read the stored row; deterministic SC-002 tests; quickstart states that only real runs count | PASS |
 | V | Four packages and two ports, each with a present need (R8); dependencies limited to FastAPI, uvicorn, pytest, httpx; no rejection, cancellation, deletion, pagination or audit features | PASS |
-| VI | Technology choices R1–R9 in research; unstated behaviour recorded as PA-1…PA-6; spec A6/A7 kept open | PASS |
+| VI | Technology choices R1–R9 in research; unstated behaviour recorded as PA-1…PA-7; spec A6/A7 kept open | PASS |
 
 ## Complexity Tracking
 
