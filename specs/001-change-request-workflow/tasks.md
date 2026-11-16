@@ -380,12 +380,12 @@ preserves `changes_requested_reason`. T041 changes code only if T039/T040 fail.
 
 ### Tests for User Story 4 (write first) ⚠️
 
-- [ ] T039 [P] [US4] Write `tests/unit/domain/test_us4_rework_rules.py` (no HTTP, no DB): owner
+- [X] T039 [P] [US4] Write `tests/unit/domain/test_us4_rework_rules.py` (no HTTP, no DB): owner
   edits a ChangesRequested request → status stays ChangesRequested, version +1,
   `changes_requested_reason` kept (PA-1); owner submits it → PendingReview, reason kept;
   non-owner → `Forbidden`; full Domain cycle Draft → PendingReview → ChangesRequested →
   PendingReview → Approved using only rules functions
-- [ ] T040 [P] [US4] Write `tests/api/test_us4_rework.py` (HTTP + SQLite): US4 scenarios 1–4
+- [X] T040 [P] [US4] Write `tests/api/test_us4_rework.py` (HTTP + SQLite): US4 scenarios 1–4
   (200/200; scenario 3: alice on carol's request → 404, bob on alice's request → 403;
   scenario 4: 200 then edit → 422) with stored rows checked; requester sees
   `changes_requested_reason` when viewing; end-to-end over HTTP: create → submit → request
@@ -394,9 +394,14 @@ preserves `changes_requested_reason`. T041 changes code only if T039/T040 fail.
 
 ### Implementation for User Story 4
 
-- [ ] T041 [US4] Make T039 and T040 pass with changes limited to `src/changeflow/domain/rules.py`
+- [X] T041 [US4] Make T039 and T040 pass with changes limited to `src/changeflow/domain/rules.py`
   (edit/submit must accept ChangesRequested via `TRANSITIONS` and must not clear
-  `changes_requested_reason`); record in this task's checkbox note whether any change was needed
+  `changes_requested_reason`); record in this task's checkbox note whether any change was needed. *Note: no change was needed; T039 and T040 (12 tests)
+  passed against the existing code. To show they are not vacuous: removing the two
+  ChangesRequested rows from `TRANSITIONS` made 7 fail, and making `edit` clear
+  `changes_requested_reason` made 4 fail; the code was restored unchanged both times. T039
+  asserts the version increment over HTTP (T040), because the Domain leaves `version`
+  unchanged and storage increments it on save (research R2).*
 
 **Checkpoint**: all user stories work; `pytest` passes.
 
