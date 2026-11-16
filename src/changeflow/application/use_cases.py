@@ -40,3 +40,30 @@ class UseCases:
         if not self._repository.update_if_version(updated, loaded_version):
             raise Conflict()
         return replace(updated, version=loaded_version + 1)
+
+    # --- User Story 1 ----------------------------------------------------------
+
+    def create(self, token: str | None, body: object) -> ChangeRequest:
+        actor = self._authenticate(token)
+        return self._repository.add(rules.create_request(actor, body))
+
+    def get(self, token: str | None, raw_id: str) -> ChangeRequest:
+        actor = self._authenticate(token)
+        return self._load_visible(actor, raw_id)
+
+    def list_requests(self, token: str | None) -> list[ChangeRequest]:
+        """FR-015, PA-2, PA-3: reviewers get all; everyone else gets their own."""
+        actor = self._authenticate(token)
+        if rules.sees_all_requests(actor):
+            return self._repository.list_all()
+        return self._repository.list_by_requester(actor.user_id)
+
+    def edit(self, token: str | None, raw_id: str, body: object) -> ChangeRequest:
+        actor = self._authenticate(token)
+        loaded = self._load_visible(actor, raw_id)
+        return self._save(rules.edit(actor, loaded, body), loaded.version)
+
+    def submit(self, token: str | None, raw_id: str, body: object) -> ChangeRequest:
+        actor = self._authenticate(token)
+        loaded = self._load_visible(actor, raw_id)
+        return self._save(rules.submit(actor, loaded, body), loaded.version)

@@ -20,6 +20,10 @@ class ChangeRequestList(BaseModel):
     items: list[ChangeRequestOut]
 
 
+def to_list(requests: list[ChangeRequest]) -> ChangeRequestList:
+    return ChangeRequestList(items=[to_out(r) for r in requests])
+
+
 def to_out(request: ChangeRequest) -> ChangeRequestOut:
     return ChangeRequestOut(
         id=request.id,

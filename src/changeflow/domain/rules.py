@@ -3,8 +3,18 @@
 Standard library only (Constitution Principle I).
 """
 
-from changeflow.domain.errors import Conflict, InvalidInput, InvalidStatus
-from changeflow.domain.model import TRANSITIONS, Actor, ChangeRequest, Role, Status
+from dataclasses import replace
+
+from changeflow.domain.errors import Conflict, Forbidden, InvalidInput, InvalidStatus
+from changeflow.domain.model import (
+    EDIT,
+    SUBMIT,
+    TRANSITIONS,
+    Actor,
+    ChangeRequest,
+    Role,
+    Status,
+)
 
 # Field limits (spec assumption A6, still open): defined once here so a decision
 # on A6 is a single edit.
@@ -13,9 +23,14 @@ TEXT_MAX = 10_000
 FIELD_LIMITS = {"title": TITLE_MAX, "description": TEXT_MAX, "reason": TEXT_MAX}
 
 
+def sees_all_requests(actor: Actor) -> bool:
+    """FR-015(b): a user currently holding the Reviewer role sees every request."""
+    return Role.REVIEWER in actor.roles
+
+
 def is_visible(actor: Actor, request: ChangeRequest) -> bool:
     """FR-015: reviewers see all; the requester always sees their own request."""
-    return Role.REVIEWER in actor.roles or request.requester_id == actor.user_id
+    return sees_all_requests(actor) or request.requester_id == actor.user_id
 
 
 def validate_body(body: object) -> dict:
@@ -63,3 +78,50 @@ def next_status(request: ChangeRequest, operation: str) -> Status:
             f"'{operation}' is not allowed when the request is {request.status.value}."
         )
     return target
+
+
+# --- Requester operations (FR-005..FR-009). Each applies FR-020 steps 3 -> 6. ---
+
+
+def _require_requester_role(actor: Actor) -> None:
+    if Role.REQUESTER not in actor.roles:
+        raise Forbidden("The Requester role is required.")
+
+
+def _require_owning_requester(actor: Actor, request: ChangeRequest) -> None:
+    if request.requester_id != actor.user_id:
+        raise Forbidden("Only the request's requester may do this.")
+    _require_requester_role(actor)
+
+
+def create_request(actor: Actor, body: object) -> ChangeRequest:
+    _require_requester_role(actor)  # step 3
+    text = validate_text(validate_body(body), "title", "description", "reason")  # step 4
+    return ChangeRequest(
+        id=None,
+        title=text["title"],
+        description=text["description"],
+        reason=text["reason"],
+        requester_id=actor.user_id,
+        status=Status.DRAFT,
+        version=1,
+        changes_requested_reason=None,
+    )
+
+
+def edit(actor: Actor, request: ChangeRequest, body: object) -> ChangeRequest:
+    """Replace title, description and reason together (PA-4); keeps the reason (PA-1)."""
+    _require_owning_requester(actor, request)  # step 3
+    data = validate_body(body)  # step 4
+    text = validate_text(data, "title", "description", "reason")
+    version = validate_version(data)
+    check_version(request, version)  # step 5
+    status = next_status(request, EDIT)  # step 6
+    return replace(request, status=status, **text)
+
+
+def submit(actor: Actor, request: ChangeRequest, body: object) -> ChangeRequest:
+    _require_owning_requester(actor, request)  # step 3
+    version = validate_version(validate_body(body))  # step 4
+    check_version(request, version)  # step 5
+    return replace(request, status=next_status(request, SUBMIT))  # step 6

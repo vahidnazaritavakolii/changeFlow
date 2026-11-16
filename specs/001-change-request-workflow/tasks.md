@@ -226,7 +226,7 @@ the last edit and status PendingReview (spec US1).
 
 ### Tests for User Story 1 (write first, confirm they fail) ⚠️
 
-- [ ] T025 [P] [US1] Write `tests/unit/domain/test_us1_requester_rules.py` (no HTTP, no DB):
+- [X] T025 [P] [US1] Write `tests/unit/domain/test_us1_requester_rules.py` (no HTTP, no DB):
   `create` — Requester gets a Draft with `requester_id` = caller and `version` 1; no Requester
   role (reviewer-only, no roles) → `Forbidden` (also when the body is invalid: forbidden before
   invalid input); `edit` and `submit` on own Draft succeed (edit keeps status Draft, submit →
@@ -235,7 +235,7 @@ the last edit and status PendingReview (spec US1).
   submit on PendingReview or Approved → `InvalidStatus`; stale `version` → `Conflict`; order
   checks: forbidden beats invalid input, invalid input beats conflict, conflict beats invalid
   status (FR-005–FR-009, FR-019, FR-020)
-- [ ] T026 [P] [US1] Write `tests/api/test_us1_create_view_list.py` (HTTP + SQLite): US1
+- [X] T026 [P] [US1] Write `tests/api/test_us1_create_view_list.py` (HTTP + SQLite): US1
   scenario 1 (201, row stored as Draft/version 1/requester alice); scenario 4 (bob, dave → 403,
   no row stored); scenario 5 (missing/blank/too-long fields → 400, no row stored); scenario 7
   (no token, malformed header, unknown token → 401 with `WWW-Authenticate: Bearer` on create,
@@ -244,7 +244,7 @@ the last edit and status PendingReview (spec US1).
   request owned by carol → 404 (hiding existence, FR-015); `DELETE /change-requests/{id}` and an
   unlisted route (e.g. `POST /change-requests/{id}/reject`) → 404 or 405, with the stored row
   unchanged (FR-019, FR-021)
-- [ ] T027 [P] [US1] Write `tests/api/test_us1_edit_submit.py` (HTTP + SQLite): scenario 2 (PUT
+- [X] T027 [P] [US1] Write `tests/api/test_us1_edit_submit.py` (HTTP + SQLite): scenario 2 (PUT
   with current version → 200, row has new text, version +1); scenario 3 (submit → 200,
   PendingReview); scenario 6 (alice edits/submits carol's Draft → 404; bob (reviewer) edits or
   submits alice's Draft → 403); scenario 8 (edit when PendingReview or Approved → 422); missing
@@ -255,20 +255,20 @@ the last edit and status PendingReview (spec US1).
 
 ### Implementation for User Story 1
 
-- [ ] T028 [US1] Add `create_request(actor, body)`, `edit(actor, request, body)` and
+- [X] T028 [US1] Add `create_request(actor, body)`, `edit(actor, request, body)` and
   `submit(actor, request, body)` to `src/changeflow/domain/rules.py`, each applying FR-020 steps
   3→6 in order using the shared helpers: permission (create: holds Requester; edit/submit: is
   requester **and** holds Requester) → `validate_body`/`validate_text("title", "description",
   "reason")` (edit, create) / `validate_version` (edit, submit) → `check_version` →
   `next_status`; return the new `ChangeRequest` (edit replaces all three fields, PA-4; neither
   clears `changes_requested_reason`, PA-1). Make T025 pass
-- [ ] T029 [US1] Add `UseCases.create(token, body)`, `get(token, raw_id)`, `list_requests(token)`,
+- [X] T029 [US1] Add `UseCases.create(token, body)`, `get(token, raw_id)`, `list_requests(token)`,
   `edit(token, raw_id, body)` and `submit(token, raw_id, body)` to
   `src/changeflow/application/use_cases.py`: authenticate → (load visible) → Domain function →
   `repository.add` / `_save`; `list_requests` returns `list_all()` for reviewers, else
   `list_by_requester(actor.user_id)` for every other caller, whatever roles they hold (empty if
   they own none) (FR-015, PA-2, PA-3)
-- [ ] T030 [US1] Add handlers to `src/changeflow/api/routes.py`: `POST /change-requests` (201),
+- [X] T030 [US1] Add handlers to `src/changeflow/api/routes.py`: `POST /change-requests` (201),
   `GET /change-requests`, `GET /change-requests/{id}`, `PUT /change-requests/{id}`,
   `POST /change-requests/{id}/submit`; each handler reads `bearer_token`, the path id as `str`,
   and `json_body` where applicable, calls exactly one `UseCases` method and returns `to_out(...)`
