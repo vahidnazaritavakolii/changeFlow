@@ -409,15 +409,15 @@ preserves `changes_requested_reason`. T041 changes code only if T039/T040 fail.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T042 Create `specs/001-change-request-workflow/traceability.md`: a table mapping every
+- [X] T042 Create `specs/001-change-request-workflow/traceability.md`: a table mapping every
   FR-001…FR-023 and SC-001…SC-006 to the test file(s) and test function(s) that cover it; any
   requirement without a test is listed as a gap (SC-004; input for `/speckit-converge`)
-- [ ] T043 Run every command in `specs/001-change-request-workflow/quickstart.md` (install, seed,
+- [X] T043 Run every command in `specs/001-change-request-workflow/quickstart.md` (install, seed,
   start server, scenarios 1–10, reset) and record in
   `specs/001-change-request-workflow/quickstart-results.md` each exact command, its real output
   and status code, and whether it matched the expected result; mismatches are reported, not
   hidden (Principle IV)
-- [ ] T044 Final: run `python --version`, `pip freeze` and `pytest -v` from the repository root
+- [X] T044 Final: run `python --version`, `pip freeze` and `pytest -v` from the repository root
   with the virtual environment active, and record in
   `specs/001-change-request-workflow/test-results.md` the date, each exact command and its
   complete real output (pass/fail counts included). Do not summarise or edit the output; failing

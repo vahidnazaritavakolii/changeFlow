@@ -86,18 +86,28 @@ BAD_HEADERS = [
 
 @pytest.mark.parametrize("headers", BAD_HEADERS, ids=["none", "scheme", "empty", "unknown"])
 def test_unauthenticated_calls_are_rejected(client, insert_request, read_row, headers):
-    request_id = insert_request("alice")
-    before = read_row(request_id)
+    """FR-013: every operation rejects unauthenticated callers, before any other check."""
+    draft_id = insert_request("alice")
+    pending_id = insert_request("alice", status="PendingReview", version=2)
+    before = {draft_id: read_row(draft_id), pending_id: read_row(pending_id)}
     for response in (
         client.post("/change-requests", json=TEXT, headers=headers),
         client.get("/change-requests", headers=headers),
-        client.get(f"/change-requests/{request_id}", headers=headers),
+        client.get(f"/change-requests/{draft_id}", headers=headers),
         client.get("/change-requests/999", headers=headers),
+        client.put(f"/change-requests/{draft_id}", json={**TEXT, "version": 1},
+                   headers=headers),
+        client.post(f"/change-requests/{draft_id}/submit", json={"version": 1},
+                    headers=headers),
+        client.post(f"/change-requests/{pending_id}/approve", json={"version": 2},
+                    headers=headers),
+        client.post(f"/change-requests/{pending_id}/request-changes",
+                    json={"version": 2, "reason": "x"}, headers=headers),
     ):
         assert_error(response, 401, "unauthenticated")
         assert response.headers["WWW-Authenticate"] == "Bearer"
-    assert read_row(request_id) == before
-    assert read_row(request_id + 1) is None
+    assert {i: read_row(i) for i in before} == before
+    assert read_row(pending_id + 1) is None
 
 
 # --- View ---------------------------------------------------------------------------------
