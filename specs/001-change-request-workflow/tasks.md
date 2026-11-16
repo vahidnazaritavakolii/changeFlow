@@ -340,13 +340,13 @@ and T037 already pass, record that in the task note; T038 changes code only for 
 
 ### Tests for User Story 3 (write first) ⚠️
 
-- [ ] T036 [P] [US3] Write `tests/integration/test_concurrency.py` (real SQLite, no HTTP):
+- [X] T036 [P] [US3] Write `tests/integration/test_concurrency.py` (real SQLite, no HTTP):
   interleaving — build `UseCases` on `db_path`, load a request, change it through a second
   `UseCases` call, then call `repository.update_if_version` with the first copy's version →
   `False` and the row equals the second change; for each of edit, submit, approve and
   request-changes, two calls with the same `version` → the first succeeds and the second raises
   `Conflict`, and the stored row reflects only the first (SC-002, FR-014)
-- [ ] T037 [P] [US3] Write `tests/api/test_us3_stale_writes.py` (HTTP + SQLite): US3 scenario 1
+- [X] T037 [P] [US3] Write `tests/api/test_us3_stale_writes.py` (HTTP + SQLite): US3 scenario 1
   (edit on V after V+1 → 409, row unchanged); scenario 2 (bob approves and erin requests changes,
   both with the same version → exactly one 200, the other 409, stored status matches the winner);
   scenario 3 (after a 401/403/404/400/409/422 the row's content, status and version are
@@ -354,11 +354,14 @@ and T037 already pass, record that in the task note; T038 changes code only for 
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Make T036 and T037 pass with changes limited to
+- [X] T038 [US3] Make T036 and T037 pass with changes limited to
   `src/changeflow/application/use_cases.py` (`_save` must raise `Conflict` and write nothing when
   `update_if_version` returns `False`) and `src/changeflow/infrastructure/sqlite_repository.py`
   (`update_if_version` must stay a single conditional statement); record in this task's
-  checkbox note whether any change was needed
+  checkbox note whether any change was needed. *Note: no change was needed; T036 and T037 (19 tests)
+  passed against the existing code. To show they are not vacuous, the `version = ?` condition
+  was temporarily removed from `update_if_version`: 6 interleaving tests in T036 failed; the
+  code was then restored unchanged.*
 
 **Checkpoint**: all tests so far pass.
 
